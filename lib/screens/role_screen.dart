@@ -179,7 +179,8 @@ class _RoleScreenState extends State<RoleScreen> {
       'clients': 'Клиентов',
       'bookings': 'Бронирований',
       'activeBookings': 'Активных бронирований',
-      'deletedRecords': 'Записей в корзине'
+      'deletedRecords': 'Записей в корзине',
+      'revenue': 'Получено оплат, ₽'
     };
     return [
       for (final entry in values.entries)

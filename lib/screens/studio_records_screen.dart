@@ -95,6 +95,7 @@ class _StudioRecordsScreenState extends State<StudioRecordsScreen> {
         animation: store,
         builder: (context, _) => Scaffold(
               appBar: AppBar(
+                  leading: BackButton(onPressed: () => context.go('/')),
                   title: Text(studioEntityTitle(widget.entity)),
                   actions: [
                     IconButton(
