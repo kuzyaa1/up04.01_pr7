@@ -6,7 +6,9 @@ import '../state/session.dart';
 class SupabaseAuthRepository extends AuthRepository {
   SupabaseAuthRepository(this.dataDio, {required this.accessToken})
       : authDio = Dio(BaseOptions(
-          baseUrl: '$supabaseUrl/auth/v1',
+          baseUrl: supabaseUrl.isEmpty
+              ? 'http://localhost/auth/v1'
+              : '$supabaseUrl/auth/v1',
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 15),
           headers: {'apikey': supabasePublishableKey},
