@@ -179,12 +179,14 @@ class _BookingListScreenState extends State<BookingListScreen> {
             (value) => _go(query.copyWith(dateFrom: value))),
         _dateField('Дата по', query.dateTo,
             (value) => _go(query.copyWith(dateTo: value))),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Switch(
-              value: query.includeDeleted,
-              onChanged: (value) => _go(query.copyWith(includeDeleted: value))),
-          const Text('Удалённые')
-        ]),
+        if (context.watch<SessionStore>().permissions.canRestore)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Switch(
+                value: query.includeDeleted,
+                onChanged: (value) =>
+                    _go(query.copyWith(includeDeleted: value))),
+            const Text('Удалённые')
+          ]),
         TextButton(
             onPressed: query.hasActiveFilters
                 ? () => _go(BookingQuery(
@@ -251,6 +253,8 @@ class _BookingListScreenState extends State<BookingListScreen> {
       ]);
     }
     return EntityTable<Booking>(
+      selectable:
+          context.watch<SessionStore>().permissions.canManageEntity('bookings'),
       items: notifier.result.items,
       id: (item) => item.id,
       selected: notifier.selected,
@@ -288,13 +292,18 @@ class _BookingListScreenState extends State<BookingListScreen> {
 
   Widget _card(Booking item, CatalogNotifier catalog) => Card(
         child: ResponsiveRecordTile(
-          leading: Checkbox(
-              value: context
-                  .watch<BookingListNotifier>()
-                  .selected
-                  .contains(item.id),
-              onChanged: (_) =>
-                  context.read<BookingListNotifier>().toggle(item.id)),
+          leading: context
+                  .watch<SessionStore>()
+                  .permissions
+                  .canManageEntity('bookings')
+              ? Checkbox(
+                  value: context
+                      .watch<BookingListNotifier>()
+                      .selected
+                      .contains(item.id),
+                  onChanged: (_) =>
+                      context.read<BookingListNotifier>().toggle(item.id))
+              : null,
           title: Text('${item.clientName} · ${_formatDate(item.date)}'),
           subtitle: Text(
               '${catalog.hallName(item.hallId)} · ${item.shootingType}\n'

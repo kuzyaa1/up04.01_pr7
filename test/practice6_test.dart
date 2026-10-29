@@ -254,6 +254,8 @@ void main() {
         role: 'client');
     await tester.pumpAndSettle();
     expect(find.text('Новый зал'), findsNothing);
+    expect(find.byType(Switch), findsNothing);
+    expect(find.byType(Checkbox), findsNothing);
     expect(find.byTooltip('Редактировать'), findsNothing);
     expect(find.byTooltip('Забронировать зал'), findsWidgets);
   });

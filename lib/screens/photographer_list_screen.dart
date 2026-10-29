@@ -154,12 +154,14 @@ class _PhotographerListScreenState extends State<PhotographerListScreen> {
             (value) => _go(query.copyWith(rateFrom: value))),
         _numberField('Ставка до', query.rateTo,
             (value) => _go(query.copyWith(rateTo: value))),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Switch(
-              value: query.includeDeleted,
-              onChanged: (value) => _go(query.copyWith(includeDeleted: value))),
-          const Text('Удалённые')
-        ]),
+        if (context.watch<SessionStore>().permissions.canRestore)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Switch(
+                value: query.includeDeleted,
+                onChanged: (value) =>
+                    _go(query.copyWith(includeDeleted: value))),
+            const Text('Удалённые')
+          ]),
         TextButton(
             onPressed: query.hasActiveFilters
                 ? () => _go(PhotographerQuery(
@@ -216,6 +218,10 @@ class _PhotographerListScreenState extends State<PhotographerListScreen> {
       ]);
     }
     return EntityTable<Photographer>(
+      selectable: context
+          .watch<SessionStore>()
+          .permissions
+          .canManageEntity('photographers'),
       items: notifier.result.items,
       id: (item) => item.id,
       selected: notifier.selected,
@@ -258,13 +264,18 @@ class _PhotographerListScreenState extends State<PhotographerListScreen> {
 
   Widget _card(Photographer item, CatalogNotifier catalog) => Card(
         child: ResponsiveRecordTile(
-          leading: Checkbox(
-              value: context
-                  .watch<PhotographerListNotifier>()
-                  .selected
-                  .contains(item.id),
-              onChanged: (_) =>
-                  context.read<PhotographerListNotifier>().toggle(item.id)),
+          leading: context
+                  .watch<SessionStore>()
+                  .permissions
+                  .canManageEntity('photographers')
+              ? Checkbox(
+                  value: context
+                      .watch<PhotographerListNotifier>()
+                      .selected
+                      .contains(item.id),
+                  onChanged: (_) =>
+                      context.read<PhotographerListNotifier>().toggle(item.id))
+              : null,
           title: Text(item.fullName),
           subtitle: Text('${item.specialization}\n'
               'Стаж ${item.experienceYears} лет · ${item.hourlyRate} ₽/час\n'

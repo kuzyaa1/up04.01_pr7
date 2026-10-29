@@ -135,12 +135,14 @@ class _HallListScreenState extends State<HallListScreen> {
             (value) => _go(query.copyWith(priceFrom: value))),
         _numberField('Цена до', query.priceTo,
             (value) => _go(query.copyWith(priceTo: value))),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Switch(
-              value: query.includeDeleted,
-              onChanged: (value) => _go(query.copyWith(includeDeleted: value))),
-          const Text('Удалённые')
-        ]),
+        if (context.watch<SessionStore>().permissions.canRestore)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Switch(
+                value: query.includeDeleted,
+                onChanged: (value) =>
+                    _go(query.copyWith(includeDeleted: value))),
+            const Text('Удалённые')
+          ]),
         TextButton(
             onPressed: query.hasActiveFilters
                 ? () => _go(HallQuery(
@@ -195,6 +197,8 @@ class _HallListScreenState extends State<HallListScreen> {
           children: [for (final item in notifier.result.items) _card(item)]);
     }
     return EntityTable<StudioHall>(
+      selectable:
+          context.watch<SessionStore>().permissions.canManageEntity('halls'),
       items: notifier.result.items,
       id: (item) => item.id,
       selected: notifier.selected,
@@ -225,11 +229,16 @@ class _HallListScreenState extends State<HallListScreen> {
 
   Widget _card(StudioHall item) => Card(
         child: ResponsiveRecordTile(
-          leading: Checkbox(
-              value:
-                  context.watch<HallListNotifier>().selected.contains(item.id),
-              onChanged: (_) =>
-                  context.read<HallListNotifier>().toggle(item.id)),
+          leading:
+              context.watch<SessionStore>().permissions.canManageEntity('halls')
+                  ? Checkbox(
+                      value: context
+                          .watch<HallListNotifier>()
+                          .selected
+                          .contains(item.id),
+                      onChanged: (_) =>
+                          context.read<HallListNotifier>().toggle(item.id))
+                  : null,
           title: Text(item.name),
           subtitle: Text('${item.code} · ${item.style}\n'
               '${item.capacity} чел. · ${item.hourlyRate} ₽/час\n'

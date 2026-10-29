@@ -11,6 +11,7 @@ class EntityTable<T> extends StatelessWidget {
   final ValueChanged<String> onSort;
   final List<Widget> Function(T) actions;
   final bool Function(T)? isDeleted;
+  final bool selectable;
   const EntityTable(
       {super.key,
       required this.items,
@@ -22,7 +23,8 @@ class EntityTable<T> extends StatelessWidget {
       required this.asc,
       required this.onSort,
       required this.actions,
-      this.isDeleted});
+      this.isDeleted,
+      this.selectable = true});
   @override
   Widget build(BuildContext context) {
     final sortIndex = columns.indexWhere((column) => column.$2 == sort);
@@ -30,10 +32,11 @@ class EntityTable<T> extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          sortColumnIndex: sortIndex < 0 ? null : sortIndex + 1,
+          sortColumnIndex:
+              sortIndex < 0 ? null : sortIndex + (selectable ? 1 : 0),
           sortAscending: asc,
           columns: [
-            const DataColumn(label: Text('')),
+            if (selectable) const DataColumn(label: Text('')),
             for (final column in columns)
               DataColumn(
                 label: Text(column.$1),
@@ -45,9 +48,10 @@ class EntityTable<T> extends StatelessWidget {
           rows: [
             for (final item in items)
               DataRow(cells: [
-                DataCell(Checkbox(
-                    value: selected.contains(id(item)),
-                    onChanged: (_) => toggle(id(item)))),
+                if (selectable)
+                  DataCell(Checkbox(
+                      value: selected.contains(id(item)),
+                      onChanged: (_) => toggle(id(item)))),
                 for (final column in columns)
                   DataCell(ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 230),

@@ -162,12 +162,14 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
             (value) => _go(query.copyWith(priceFrom: value))),
         _numberField('Цена до', query.priceTo,
             (value) => _go(query.copyWith(priceTo: value))),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          Switch(
-              value: query.includeDeleted,
-              onChanged: (value) => _go(query.copyWith(includeDeleted: value))),
-          const Text('Удалённые')
-        ]),
+        if (context.watch<SessionStore>().permissions.canRestore)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Switch(
+                value: query.includeDeleted,
+                onChanged: (value) =>
+                    _go(query.copyWith(includeDeleted: value))),
+            const Text('Удалённые')
+          ]),
         TextButton(
             onPressed: query.hasActiveFilters
                 ? () => _go(EquipmentQuery(
@@ -224,6 +226,10 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
       ]);
     }
     return EntityTable<Equipment>(
+      selectable: context
+          .watch<SessionStore>()
+          .permissions
+          .canManageEntity('equipment'),
       items: notifier.result.items,
       id: (item) => item.id,
       selected: notifier.selected,
@@ -253,13 +259,18 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
 
   Widget _card(Equipment item, CatalogNotifier catalog) => Card(
         child: ResponsiveRecordTile(
-          leading: Checkbox(
-              value: context
-                  .watch<EquipmentListNotifier>()
-                  .selected
-                  .contains(item.id),
-              onChanged: (_) =>
-                  context.read<EquipmentListNotifier>().toggle(item.id)),
+          leading: context
+                  .watch<SessionStore>()
+                  .permissions
+                  .canManageEntity('equipment')
+              ? Checkbox(
+                  value: context
+                      .watch<EquipmentListNotifier>()
+                      .selected
+                      .contains(item.id),
+                  onChanged: (_) =>
+                      context.read<EquipmentListNotifier>().toggle(item.id))
+              : null,
           title: Text(item.name),
           subtitle: Text('${item.category} · ${catalog.hallName(item.hallId)}\n'
               '${item.quantity} шт. · ${item.pricePerDay} ₽/день'
