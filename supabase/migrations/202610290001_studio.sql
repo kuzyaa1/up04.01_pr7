@@ -385,7 +385,7 @@ begin
  elsif action='bulk-delete' then
   if jsonb_array_length(coalesce(payload->'ids','[]')) not between 1 and 100 then perform studio_private.fail('ids','Выберите от 1 до 100 записей');end if;
   if coalesce(query->>'hard','false')='true' and profile.role<>'admin' then raise sqlstate 'PT403' using message='Физическое удаление доступно администратору';end if;
-  for related in select distinct value::bigint from jsonb_array_elements_text(payload->'ids') loop perform studio_private.delete_record(entity,related,coalesce(query->>'hard','false')='true');total:=total+1;end loop;
+  for related in select distinct selected_id.value::bigint from jsonb_array_elements_text(payload->'ids') as selected_id(value) loop perform studio_private.delete_record(entity,related,coalesce(query->>'hard','false')='true');total:=total+1;end loop;
   return jsonb_build_object('deleted',total);
  elsif method='DELETE' and record_id is not null then
   if coalesce(query->>'hard','false')='true' and profile.role<>'admin' then raise sqlstate 'PT403' using message='Физическое удаление доступно администратору';end if;
