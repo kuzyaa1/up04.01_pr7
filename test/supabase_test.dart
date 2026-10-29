@@ -11,6 +11,8 @@ import 'package:photo_studio_portal/core/router.dart';
 import 'package:photo_studio_portal/core/supabase_api.dart';
 import 'package:photo_studio_portal/models/booking.dart';
 import 'package:photo_studio_portal/models/studio_record.dart';
+import 'package:photo_studio_portal/repositories/api_photographer_repository.dart';
+import 'package:photo_studio_portal/core/config.dart';
 import 'package:photo_studio_portal/screens/studio_record_form_screen.dart';
 import 'package:photo_studio_portal/screens/studio_records_screen.dart';
 import 'package:photo_studio_portal/state/session.dart';
@@ -59,6 +61,25 @@ Future<void> mount(WidgetTester tester, Widget screen, Dio dio,
 }
 
 void main() {
+  test('имя фотографа PostgreSQL читается и отправляется без потери', () {
+    final repo = ApiPhotographerRepository(Dio());
+    final photo = repo.fromJson({
+      'id': 1,
+      'firstName': 'Анна',
+      'lastName': 'Иванова',
+      'bio': 'Портреты'
+    });
+    expect(photo.fullName, 'Иванова Анна');
+    expect(photo.bio, 'Портреты');
+    final body = repo.toRequestBody(photo);
+    if (useSupabase) {
+      expect(body['firstName'], 'Анна');
+      expect(body['lastName'], 'Иванова');
+      expect(body['bio'], 'Портреты');
+    } else {
+      expect(body['fullName'], 'Иванова Анна');
+    }
+  });
   test('RPC сохраняет метод, фильтры и JWT', () async {
     final dio = client((o) async {
       expect(o.path, '/rest/v1/rpc/studio_api');

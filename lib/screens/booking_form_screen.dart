@@ -116,7 +116,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         label: 'Зал студии',
         type: FieldType.dropdown,
         initialValue: _selectedHallId,
-        hint: 'Связь «многие к одному»',
+        hint: 'Выберите интерьер и подходящую вместимость',
         options: [
           for (final hall in catalog.halls)
             DropdownEntry(hall.id,

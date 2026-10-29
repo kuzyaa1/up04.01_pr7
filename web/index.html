@@ -55,6 +55,12 @@
   </div>
   <noscript>Для бронирования залов включите JavaScript в браузере.</noscript>
   <script>
+    // Email confirmation completes in Supabase. Login is then performed normally.
+    // Remove callback credentials before the router can copy them into a return URL.
+    const authCallback = new URLSearchParams(location.hash.slice(1));
+    if (authCallback.has('access_token') || authCallback.has('refresh_token')) {
+      history.replaceState(null, '', location.pathname + location.search);
+    }
     window.addEventListener('flutter-first-frame', () => {
       window.focusFrameReadyMs = performance.now();
       document.documentElement.dataset.firstFrameMs = window.focusFrameReadyMs.toFixed(1);

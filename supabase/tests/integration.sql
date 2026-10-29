@@ -62,5 +62,13 @@ select pg_temp.check_that(not exists(select 1 from public.payments where id=(sel
 select public.studio_api('/equipment','POST','{}',jsonb_build_object('name','Софтбокс тестовый','category','Свет','manufacturer','','hallId',(select id from fixture where name='hall'),'quantity',2,'pricePerDay',300));
 select public.studio_api('/services/'||(select id from fixture where name='service'),'PUT','{}','{"price":600}');
 select pg_temp.check_that((public.studio_api('/services/'||(select id from fixture where name='service'))->>'price')::int=600,'service update and read');
+insert into fixture values ('bulk1',(public.studio_api('/services','POST','{}','{"name":"Групповая тестовая 1","category":"Тест","price":100,"description":""}')->>'id')::bigint);
+insert into fixture values ('bulk2',(public.studio_api('/services','POST','{}','{"name":"Групповая тестовая 2","category":"Тест","price":200,"description":""}')->>'id')::bigint);
+select public.studio_api('/services/bulk-delete','POST','{}',jsonb_build_object('ids',(select jsonb_agg(id) from fixture where name in ('bulk1','bulk2'))));
+select pg_temp.check_that((select count(*) from public.services where id in (select id from fixture where name in ('bulk1','bulk2')) and "deletedAt" is not null)=2,'bulk soft deletion');
+select public.studio_api('/services/'||(select id from fixture where name='bulk1')||'/restore','POST');
+select pg_temp.check_that((public.studio_api('/services/'||(select id from fixture where name='bulk1'))->>'deletedAt') is null,'restore selected bulk record');
+select public.studio_api('/services/bulk-delete','POST','{"hard":true}',jsonb_build_object('ids',(select jsonb_agg(id) from fixture where name in ('bulk1','bulk2'))));
+select pg_temp.check_that(not exists(select 1 from public.services where id in (select id from fixture where name in ('bulk1','bulk2'))),'bulk physical deletion');
 rollback;
 \echo All database integration checks passed

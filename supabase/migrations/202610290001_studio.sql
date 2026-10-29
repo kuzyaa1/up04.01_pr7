@@ -363,7 +363,15 @@ begin
    end if;
   end loop;
   sort_field:=split_part(coalesce(query->>'sort','id,asc'),',',1);descending:=split_part(query->>'sort',',',2)='desc';
-  if entity='bookings' and sort_field='clientName' then
+  if entity='clients' and sort_field='name' then sort_field:='fullName';end if;
+  if entity='bookings' and sort_field='total' then sort_field:='totalPrice';end if;
+  if entity='clients' and sort_field='cardNumber' then
+   sort_expression:='(select s.number from public.subscriptions s where s."clientId"=t.id and s."deletedAt" is null)';
+  elsif entity='clients' and sort_field='cardExpiresAt' then
+   sort_expression:='(select s."expiresAt" from public.subscriptions s where s."clientId"=t.id and s."deletedAt" is null)';
+  elsif entity='equipment' and sort_field='hall' then
+   sort_expression:='(select h.name from public.halls h where h.id=t."hallId")';
+  elsif entity='bookings' and sort_field='clientName' then
    sort_expression:='(studio_private.row_json(''bookings'',t.id)->>''clientName'')';
   else
    if not exists(select 1 from pg_attribute where attrelid=format('public.%I',entity)::regclass and attname=sort_field and attnum>0 and not attisdropped) then sort_field:='id';end if;

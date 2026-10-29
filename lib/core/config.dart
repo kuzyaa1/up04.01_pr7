@@ -4,7 +4,8 @@
 /// flutter run -d chrome --web-port=5555 --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
 /// ```
 ///
-/// В опубликованной версии API и сайт работают на одном HTTPS-источнике.
+/// ПР7: параметры Supabase передаются из config/supabase.public.json.
+/// API_BASE_URL сохраняется для проверок предыдущих практических работ.
 library;
 
 /// Базовый адрес REST API. Задаётся через `--dart-define=API_BASE_URL=...`.

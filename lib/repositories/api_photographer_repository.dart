@@ -1,4 +1,5 @@
 import '../core/json_parsing.dart';
+import '../core/config.dart';
 import '../models/photographer.dart';
 import '../models/photographer_query.dart';
 import 'api_repository.dart';
@@ -24,10 +25,10 @@ class ApiPhotographerRepository
     final firstName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
     return Photographer(
       id: parseInt(json['id']),
-      firstName: firstName,
-      lastName: lastName,
+      firstName: parseString(json['firstName'], fallback: firstName),
+      lastName: parseString(json['lastName'], fallback: lastName),
       specialization: parseString(json['specialization']),
-      bio: parseString(json['city']),
+      bio: parseString(json['bio'] ?? json['city']),
       experienceYears: parseInt(json['experienceYears']),
       hourlyRate: parseInt(json['hourlyRate']),
       hallIds: parseIntList(json['hallIds']),
@@ -38,9 +39,15 @@ class ApiPhotographerRepository
 
   @override
   Map<String, dynamic> toRequestBody(Photographer photographer) => {
-        'fullName': photographer.fullName.trim(),
+        if (useSupabase) ...{
+          'firstName': photographer.firstName.trim(),
+          'lastName': photographer.lastName.trim(),
+          'bio': photographer.bio.trim(),
+        } else ...{
+          'fullName': photographer.fullName.trim(),
+          'city': photographer.bio.trim(),
+        },
         'specialization': photographer.specialization.trim(),
-        'city': photographer.bio.trim(),
         'hallIds': photographer.hallIds,
         'experienceYears': photographer.experienceYears,
         'hourlyRate': photographer.hourlyRate,
