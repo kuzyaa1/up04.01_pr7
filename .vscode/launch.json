@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FocusFrame — Supabase",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "toolArgs": ["--web-port=5555", "--dart-define-from-file=config/supabase.public.json"]
+    }
+  ]
+}

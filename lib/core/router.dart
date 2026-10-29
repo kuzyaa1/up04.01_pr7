@@ -27,6 +27,9 @@ import '../screens/photographer_list_screen.dart';
 import '../state/session.dart';
 import '../widgets/dirty_guard.dart';
 import '../screens/entity_detail_screen.dart';
+import '../screens/studio_records_screen.dart';
+import '../screens/studio_record_form_screen.dart';
+import '../models/studio_record.dart';
 
 // This is a UI rule. The server independently checks the signed access token.
 bool isRouteAllowed(String path, Permissions p) {
@@ -35,6 +38,12 @@ bool isRouteAllowed(String path, Permissions p) {
   if (path == '/my-bookings') return p.canUseClientPortal;
   if (path == '/manager') return p.canUseManagerWorkspace;
   if (path.startsWith('/admin/')) return p.canManageUsers;
+  if (path == '/subscriptions' ||
+      path.startsWith('/subscriptions/') ||
+      path == '/payments' ||
+      path.startsWith('/payments/')) {
+    return p.canManageEntity(path.split('/')[1]);
+  }
   if (path == '/clients' || path.startsWith('/clients/')) {
     return p.canManageClients;
   }
@@ -119,6 +128,24 @@ GoRouter createRouter(SessionStore session) {
     },
 
     routes: [
+      for (final entity in ['subscriptions', 'services', 'payments']) ...[
+        GoRoute(
+            path: '/$entity',
+            builder: (_, s) => StudioRecordsScreen(
+                entity: entity, query: StudioQuery.fromUri(s.uri))),
+        GoRoute(
+            path: '/$entity/new',
+            onExit: (_, __) =>
+                !session.isAuthenticated ? true : DirtyGuard.mayLeave(),
+            builder: (_, __) => StudioRecordFormScreen(entity: entity)),
+        GoRoute(
+            path: '/$entity/:id/edit',
+            onExit: (_, __) =>
+                !session.isAuthenticated ? true : DirtyGuard.mayLeave(),
+            builder: (_, s) => StudioRecordFormScreen(
+                entity: entity,
+                id: int.tryParse(s.pathParameters['id'] ?? '') ?? -1)),
+      ],
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(path: '/forbidden', builder: (_, __) => const NoAccessScreen()),
       GoRoute(

@@ -31,6 +31,12 @@ class ApiBookingRepository extends ApiRepository<Booking, BookingQuery>
       hallId: parseInt(hallData['id'] ?? json['hallId']),
       photographerIds: parseIntList(json['photographerIds']),
       date: parseDate(json['date']) ?? DateTime.now(),
+      startTime: parseString(json['startTime'], fallback: '10:00'),
+      serviceIds: parseIntList(json['serviceIds']),
+      totalPrice: double.tryParse('${json['totalPrice']}') ?? 0,
+      costBreakdown: json['costBreakdown'] is Map<String, dynamic>
+          ? json['costBreakdown'] as Map<String, dynamic>
+          : const {},
       durationHours: parseInt(json['durationHours'], fallback: 1),
       participants: parseInt(json['participants'], fallback: 1),
       shootingType: parseString(json['shootingType'], fallback: 'Портрет'),
@@ -48,6 +54,8 @@ class ApiBookingRepository extends ApiRepository<Booking, BookingQuery>
         'hallId': booking.hallId,
         'clientId': booking.clientId,
         'photographerIds': booking.photographerIds,
+        'startTime': booking.startTime,
+        'serviceIds': booking.serviceIds,
         'date':
             '${booking.date.year.toString().padLeft(4, '0')}-${booking.date.month.toString().padLeft(2, '0')}-${booking.date.day.toString().padLeft(2, '0')}',
         'durationHours': booking.durationHours,

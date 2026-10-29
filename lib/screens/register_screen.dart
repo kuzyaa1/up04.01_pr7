@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../core/api_exceptions.dart';
+import '../core/config.dart';
 import '../core/validators.dart';
 import '../state/session.dart';
 
 String? registrationPasswordError(String? value) {
   final password = value ?? '';
   if (password.length < 8) return 'Не менее 8 символов';
+  if (password.length > 72) return 'Не более 72 символов';
   if (!RegExp(r'\d').hasMatch(password)) return 'Добавьте цифру';
   if (!RegExp(r'[^\p{L}\p{N}\s]', unicode: true).hasMatch(password)) {
     return 'Добавьте специальный символ';
@@ -55,6 +57,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _password.text,
           fullName: _name.text.trim(),
           email: _email.text.trim());
+      if (useSupabase) {
+        if (!mounted) return;
+        await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+                  title: const Text('Аккаунт создан'),
+                  content: const Text(
+                      'Подтвердите почту по ссылке из письма Supabase, затем войдите с почтой и паролем.'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Понятно'))
+                  ],
+                ));
+        if (mounted) context.go('/login');
+        return;
+      }
       await session.signIn(auth, _username.text.trim(), _password.text);
       if (mounted) context.go('/');
     } on ValidationException catch (e) {
@@ -102,11 +121,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   'Создайте аккаунт, чтобы бронировать залы и управлять своими записями.'),
                               const SizedBox(height: 20),
                               _field(_name, 'Имя и фамилия', 'fullName',
-                                  V.required()),
+                                  V.length(min: 2, max: 100)),
                               _field(_email, 'Электронная почта', 'email',
                                   V.email()),
-                              _field(_username, 'Логин', 'username',
-                                  V.length(min: 3, max: 50)),
+                              _field(
+                                  _username,
+                                  'Логин',
+                                  'username',
+                                  (v) => useSupabase
+                                      ? RegExp(r'^[a-zA-Z0-9_]{3,40}$')
+                                              .hasMatch(v ?? '')
+                                          ? null
+                                          : 'От 3 до 40 латинских букв, цифр или подчёркиваний'
+                                      : V.length(min: 3, max: 50)(v)),
                               _field(_password, 'Пароль', 'password',
                                   registrationPasswordError,
                                   secret: true),

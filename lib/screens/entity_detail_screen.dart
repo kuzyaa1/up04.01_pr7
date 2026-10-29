@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../state/session.dart';
+import '../core/config.dart';
 import '../widgets/state_views.dart';
 import '../models/booking.dart';
 import '../models/client.dart';
@@ -31,6 +32,8 @@ class _EntityDetailScreenState extends State<EntityDetailScreen> {
     final photographers = context.read<PhotographerRepository>();
     final equipment = context.read<EquipmentRepository>();
     final bookings = context.read<BookingRepository>();
+    final includeDeleted =
+        !useSupabase || context.read<SessionStore>().permissions.canRestore;
     final Object? record = switch (widget.collection) {
       'halls' => await halls.findById(widget.id),
       'clients' => await clients.findById(widget.id),
@@ -41,14 +44,16 @@ class _EntityDetailScreenState extends State<EntityDetailScreen> {
     };
     if (record == null) return null;
     final hallNames = {
-      for (final h in await halls.all(includeDeleted: true)) h.id: h.name
+      for (final h in await halls.all(includeDeleted: includeDeleted))
+        h.id: h.name
     };
     final photographerNames = {
-      for (final p in await photographers.all(includeDeleted: true))
+      for (final p in await photographers.all(includeDeleted: includeDeleted))
         p.id: p.fullName
     };
     final equipmentNames = {
-      for (final e in await equipment.all(includeDeleted: true)) e.id: e.name
+      for (final e in await equipment.all(includeDeleted: includeDeleted))
+        e.id: e.name
     };
     String names(List<int> ids, Map<int, String> options) =>
         ids.map((id) => options[id] ?? '#$id').join(', ');
@@ -62,6 +67,13 @@ class _EntityDetailScreenState extends State<EntityDetailScreen> {
           'Зал': hallNames[b.hallId] ?? '#${b.hallId}',
           'Фотографы': names(b.photographerIds, photographerNames),
           'Дата съёмки': b.date.toIso8601String().split('T').first,
+          if (useSupabase) 'Начало съёмки': b.startTime,
+          if (useSupabase)
+            'Итоговая стоимость': '${b.totalPrice.toStringAsFixed(2)} ₽',
+          if (useSupabase)
+            'Скидка на зал': '${b.costBreakdown['discountPercent'] ?? 0}%',
+          if (useSupabase)
+            'Дополнительные услуги': '${b.costBreakdown['services'] ?? 0} ₽',
           'Длительность': '${b.durationHours} ч',
           'Участников': '${b.participants}',
           'Тип съёмки': b.shootingType,

@@ -7,6 +7,10 @@ class Booking {
   final int hallId;
   final List<int> photographerIds;
   final DateTime date;
+  final String startTime;
+  final List<int> serviceIds;
+  final double totalPrice;
+  final Map<String, dynamic> costBreakdown;
   final int durationHours;
   final int participants;
   final String shootingType;
@@ -22,6 +26,10 @@ class Booking {
     required this.hallId,
     this.photographerIds = const [],
     required this.date,
+    this.startTime = '10:00',
+    this.serviceIds = const [],
+    this.totalPrice = 0,
+    this.costBreakdown = const {},
     required this.durationHours,
     required this.participants,
     required this.shootingType,
@@ -39,6 +47,10 @@ class Booking {
         'hallId': hallId,
         'photographerIds': photographerIds,
         'date': date.toIso8601String(),
+        'startTime': startTime,
+        'serviceIds': serviceIds,
+        'totalPrice': totalPrice,
+        'costBreakdown': costBreakdown,
         'durationHours': durationHours,
         'participants': participants,
         'shootingType': shootingType,
@@ -55,6 +67,12 @@ class Booking {
         hallId: _asInt(json['hallId']),
         photographerIds: _asIntList(json['photographerIds']),
         date: _asDate(json['date']) ?? DateTime.now(),
+        startTime: _asTime(json['startTime']),
+        serviceIds: _asIntList(json['serviceIds']),
+        totalPrice: double.tryParse('${json['totalPrice']}') ?? 0,
+        costBreakdown: json['costBreakdown'] is Map<String, dynamic>
+            ? json['costBreakdown'] as Map<String, dynamic>
+            : const {},
         durationHours: _asInt(json['durationHours'], fallback: 1),
         participants: _asInt(json['participants'], fallback: 1),
         shootingType: _asString(json['shootingType'], fallback: 'Портретная'),
@@ -70,6 +88,10 @@ class Booking {
           int? hallId,
           List<int>? photographerIds,
           DateTime? date,
+          String? startTime,
+          List<int>? serviceIds,
+          double? totalPrice,
+          Map<String, dynamic>? costBreakdown,
           int? durationHours,
           int? participants,
           String? shootingType,
@@ -86,6 +108,10 @@ class Booking {
         hallId: hallId ?? this.hallId,
         photographerIds: photographerIds ?? this.photographerIds,
         date: date ?? this.date,
+        startTime: startTime ?? this.startTime,
+        serviceIds: serviceIds ?? this.serviceIds,
+        totalPrice: totalPrice ?? this.totalPrice,
+        costBreakdown: costBreakdown ?? this.costBreakdown,
         durationHours: durationHours ?? this.durationHours,
         participants: participants ?? this.participants,
         shootingType: shootingType ?? this.shootingType,
@@ -101,6 +127,13 @@ class Booking {
       };
   static String _asString(Object? value, {String fallback = ''}) =>
       value == null ? fallback : value.toString();
+  static String _asTime(Object? value) {
+    final text = _asString(value);
+    return RegExp(r'^\d{2}:\d{2}').hasMatch(text)
+        ? text.substring(0, 5)
+        : '10:00';
+  }
+
   static List<int> _asIntList(Object? value) {
     if (value is! List) return const [];
     return value.map(_asInt).where((id) => id > 0).toList();

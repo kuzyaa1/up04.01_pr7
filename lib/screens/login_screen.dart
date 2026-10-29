@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api_exceptions.dart';
+import '../core/config.dart';
 import '../core/router.dart';
 import '../state/session.dart';
 
@@ -103,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(
-                      labelText: 'Логин',
+                      labelText: useSupabase ? 'Электронная почта' : 'Логин',
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) =>
@@ -174,8 +175,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   const SizedBox(height: 16),
                   Text(
-                    'Учебные учётные записи: manager / manager123, '
-                    'admin / admin123, client / client123',
+                    useSupabase
+                        ? 'Вход по электронной почте. Новый аккаунт получает роль клиента.'
+                        : 'Учебные учётные записи: manager / manager123, '
+                            'admin / admin123, client / client123',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),

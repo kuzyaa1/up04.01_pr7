@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/permissions.dart';
+import '../core/config.dart';
 import '../state/session.dart';
 import '../widgets/common.dart';
 import '../widgets/responsive.dart';
@@ -36,6 +37,27 @@ class HomeScreen extends StatelessWidget {
         '/equipment',
         'Многие к одному с залами'
       ),
+      if (useSupabase)
+        (
+          Icons.auto_awesome,
+          'Дополнительные услуги',
+          '/services',
+          'Макияж, ретушь и подготовка к съёмке'
+        ),
+      if (useSupabase && permissions.canManageClients)
+        (
+          Icons.card_membership,
+          'Абонементы',
+          '/subscriptions',
+          'Срок действия и скидка на аренду зала'
+        ),
+      if (useSupabase && permissions.canManageClients)
+        (
+          Icons.payments_outlined,
+          'Оплаты',
+          '/payments',
+          'Платежи по бронированиям'
+        ),
     ];
     return AppScaffold(
       title: 'FocusFrame — фотостудия',

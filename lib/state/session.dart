@@ -68,7 +68,8 @@ class SessionStore extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.signedIn;
   bool get isKnown => _status != AuthStatus.unknown;
   Permissions get permissions => isAuthenticated && _user != null
-      ? Permissions(_uiRole ?? _user!.roleLevel)
+      ? Permissions(
+          useSupabase ? _user!.roleLevel : (_uiRole ?? _user!.roleLevel))
       : const Permissions.guest();
   bool get inactivityWarning => _warning;
   int get secondsRemaining => _lastActivity == null

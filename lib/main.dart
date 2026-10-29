@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/api_client.dart';
+import 'core/config.dart';
+import 'core/supabase_api.dart';
+import 'repositories/supabase_auth_repository.dart';
 import 'core/router.dart';
 import 'core/storage.dart';
 import 'repositories/api_booking_repository.dart';
@@ -37,12 +40,15 @@ Future<void> main() async {
 
   // Токен доступа берётся у сессии в момент запроса, поэтому вход
   // и выход работают без пересборки клиента.
-  final dio = buildDio(
+  final dioBuilder = useSupabase ? buildSupabaseDio : buildDio;
+  final dio = dioBuilder(
       tokenProvider: () => session.token,
       refreshTokens: session.refreshTokens,
       onSessionExpired: () => session.logout(
           reason: 'Сессия истекла. Войдите снова.', revoke: false));
-  final auth = AuthRepository(dio);
+  final AuthRepository auth = useSupabase
+      ? SupabaseAuthRepository(dio, accessToken: () => session.token)
+      : AuthRepository(dio);
   session.attach(auth);
 
   // Профиль пользователя восстанавливается по сохранённому токену.

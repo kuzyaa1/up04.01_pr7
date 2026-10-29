@@ -20,6 +20,11 @@ const String apiBaseUrl = String.fromEnvironment(
 /// записи нельзя — он вернёт 401 или 403.
 const String apiToken = String.fromEnvironment('API_TOKEN');
 
+const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const String supabasePublishableKey =
+    String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+const bool useSupabase = supabaseUrl != '';
+
 /// Таймаут установления соединения, секунды.
 const int connectTimeoutSeconds = 10;
 

@@ -1,4 +1,4 @@
-name: Verify and build FocusFrame
+name: Build and publish FocusFrame
 on:
   push:
     branches: [main]
@@ -6,9 +6,23 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: test-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -16,23 +30,36 @@ jobs:
           flutter-version: '3.27.2'
           channel: stable
           cache: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
-      - run: node server/test-api.js && node server/test-auth.js && node server/test-booking-roles.js && node --test server/static-files.test.js
-      - run: flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=/api
-      - run: node scripts/optimize-web.js build/web
-      - uses: actions/upload-artifact@v4
+      - name: Verify database permissions, CRUD and booking rules
+        env:
+          PGPASSWORD: test-only
+        run: |
+          for sql in supabase/tests/bootstrap.sql supabase/migrations/*.sql supabase/tests/integration.sql; do
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f "$sql"
+          done
+      - run: flutter build web --release --no-web-resources-cdn --dart-define-from-file=config/supabase.public.json --base-href /up04.01_pr7/
+      - name: Support direct links on GitHub Pages
+        run: |
+          cp build/web/index.html build/web/404.html
+          touch build/web/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: focusframe-web-release
           path: build/web
-      - run: flutter build web --release --wasm --no-web-resources-cdn --dart-define=API_BASE_URL=/api
-      - uses: actions/upload-artifact@v4
-        with:
-          name: focusframe-web-wasm
-          path: build/web
-# Render watches main with autoDeployTrigger: checksPass (render.yaml).
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4

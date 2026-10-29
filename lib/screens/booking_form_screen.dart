@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import '../core/config.dart';
+import '../models/studio_record.dart';
+import '../repositories/studio_record_repository.dart';
 import '../core/form_outcome.dart';
 import '../widgets/state_views.dart';
 import '../core/validators.dart';
@@ -27,6 +31,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _entityFormKey = GlobalKey<EntityFormState>();
   Booking? _booking;
+  List<StudioRecord> _services = [];
 
   final Map<String, String?> _serverErrors = {};
   bool _loading = true;
@@ -50,7 +55,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     try {
       final catalog = context.read<CatalogNotifier>();
       final repository = context.read<BookingRepository>();
+      final services = useSupabase
+          ? StudioRecordRepository(context.read<Dio>(), 'services')
+          : null;
       await catalog.load(force: true);
+      if (services != null) {
+        _services = await services.all();
+      }
       if (catalog.error != null) throw StateError(catalog.error!);
       Booking? booking;
       if (widget.id != null) {
@@ -163,6 +174,33 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           validators: [V.required(), V.accessCode()],
           width: 320,
         ),
+      if (useSupabase)
+        FieldSpec(
+          name: 'startTime',
+          label: 'Начало съёмки (ЧЧ:ММ)',
+          initialValue: booking?.startTime.substring(0, 5) ?? '10:00',
+          serverError: _serverErrors['startTime'],
+          width: 220,
+          validators: [
+            (v) => RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(v ?? '')
+                ? null
+                : 'Укажите время ЧЧ:ММ'
+          ],
+        ),
+      if (useSupabase)
+        FieldSpec(
+          name: 'serviceIds',
+          label: 'Дополнительные услуги',
+          type: FieldType.multiselect,
+          initialValue: booking?.serviceIds ?? const [],
+          serverError: _serverErrors['serviceIds'],
+          hint: 'Необязательно. Стоимость услуг добавляется к бронированию.',
+          options: [
+            for (final service in _services)
+              DropdownEntry(
+                  service.id, '${service.title} — ${service.text('price')} ₽')
+          ],
+        ),
       FieldSpec(
         name: 'durationHours',
         serverError: _serverErrors['durationHours'],
@@ -261,6 +299,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
             hallId: form.number('hallId'),
             photographerIds: form.selection('photographerIds'),
             date: DateTime.tryParse(form.string('date')) ?? DateTime.now(),
+            startTime: useSupabase ? form.string('startTime') : '10:00',
+            serviceIds: useSupabase ? form.selection('serviceIds') : const [],
             durationHours: form.number('durationHours'),
             participants: form.number('participants'),
             shootingType: form.string('shootingType'),

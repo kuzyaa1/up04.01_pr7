@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../core/permissions.dart';
+import '../core/config.dart';
 import '../models/booking.dart';
 import '../repositories/role_repository.dart';
 import '../state/session.dart';
@@ -101,6 +102,14 @@ class _RoleScreenState extends State<RoleScreen> {
                             style: Theme.of(context).textTheme.titleMedium),
                         Text(
                             '${b.date.toIso8601String().split('T').first} · ${b.durationHours} ч · ${b.shootingType}'),
+                        if (useSupabase) ...[
+                          Text(
+                              'Начало: ${b.startTime.substring(0, 5)} · Стоимость: ${b.totalPrice.toStringAsFixed(2)} ₽'),
+                          Text(
+                              'Аренда: ${b.costBreakdown['hall'] ?? 0} ₽ · скидка: ${b.costBreakdown['discount'] ?? 0} ₽'),
+                          Text(
+                              'Фотографы: ${b.costBreakdown['photographers'] ?? 0} ₽ · услуги: ${b.costBreakdown['services'] ?? 0} ₽'),
+                        ],
                         Text(switch (b.status) {
                           'active' => 'Активно',
                           'cancelled' => 'Отменено',

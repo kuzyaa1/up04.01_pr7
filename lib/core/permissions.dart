@@ -87,7 +87,8 @@ class Permissions {
       isAuthenticated &&
       (role == UserRole.admin ||
           (role == UserRole.manager &&
-              const ['clients', 'bookings'].contains(collection)));
+              const ['clients', 'bookings', 'subscriptions', 'payments']
+                  .contains(collection)));
   bool canCreateEntity(String collection) =>
       canManageEntity(collection) || (collection == 'bookings' && canBookOwn);
 
