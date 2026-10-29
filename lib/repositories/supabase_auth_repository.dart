@@ -17,6 +17,9 @@ class SupabaseAuthRepository extends AuthRepository {
   final Dio authDio;
   final String? Function() accessToken;
   String? _lastAccessToken;
+  bool _needsEmailConfirmation = true;
+  @override
+  bool get needsEmailConfirmation => _needsEmailConfirmation;
 
   Future<Map<String, dynamic>> _request(String path,
       {Map<String, dynamic>? data, String? token}) async {
@@ -96,11 +99,12 @@ class SupabaseAuthRepository extends AuthRepository {
       required String password,
       required String fullName,
       required String email}) async {
-    await _request('/signup', data: {
+    final result = await _request('/signup', data: {
       'email': email,
       'password': password,
       'data': {'username': username, 'fullName': fullName},
     });
+    _needsEmailConfirmation = result['access_token'] == null;
   }
 
   @override

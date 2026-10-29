@@ -293,6 +293,7 @@ class SessionStore extends ChangeNotifier {
 }
 
 class AuthRepository {
+  bool get needsEmailConfirmation => false;
   AuthRepository(this._dio);
   final Dio _dio;
   AuthTokens _tokens(Map<String, dynamic> data) => (

@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _password.text,
           fullName: _name.text.trim(),
           email: _email.text.trim());
-      if (useSupabase) {
+      if (auth.needsEmailConfirmation) {
         if (!mounted) return;
         await showDialog<void>(
             context: context,
@@ -74,7 +74,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) context.go('/login');
         return;
       }
-      await session.signIn(auth, _username.text.trim(), _password.text);
+      await session.signIn(
+          auth,
+          useSupabase ? _email.text.trim() : _username.text.trim(),
+          _password.text);
       if (mounted) context.go('/');
     } on ValidationException catch (e) {
       if (mounted) {

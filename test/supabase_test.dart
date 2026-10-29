@@ -12,6 +12,7 @@ import 'package:photo_studio_portal/core/supabase_api.dart';
 import 'package:photo_studio_portal/models/booking.dart';
 import 'package:photo_studio_portal/models/studio_record.dart';
 import 'package:photo_studio_portal/repositories/api_photographer_repository.dart';
+import 'package:photo_studio_portal/repositories/supabase_auth_repository.dart';
 import 'package:photo_studio_portal/core/config.dart';
 import 'package:photo_studio_portal/screens/studio_record_form_screen.dart';
 import 'package:photo_studio_portal/screens/studio_records_screen.dart';
@@ -61,6 +62,22 @@ Future<void> mount(WidgetTester tester, Widget screen, Dio dio,
 }
 
 void main() {
+  for (final confirmation in [true, false]) {
+    test('регистрация учитывает подтверждение почты: $confirmation', () async {
+      final auth = SupabaseAuthRepository(Dio(), accessToken: () => null);
+      auth.authDio.options.baseUrl = 'https://example.supabase.co/auth/v1';
+      auth.authDio.httpClientAdapter = Adapter((o) async => reply({
+            'user': {'id': 'new-user'},
+            if (!confirmation) 'access_token': 'new-token',
+          }));
+      await auth.register(
+          username: 'new_client',
+          password: 'test-pass123!',
+          fullName: 'Новый клиент',
+          email: 'new@example.com');
+      expect(auth.needsEmailConfirmation, confirmation);
+    });
+  }
   test('имя фотографа PostgreSQL читается и отправляется без потери', () {
     final repo = ApiPhotographerRepository(Dio());
     final photo = repo.fromJson({
